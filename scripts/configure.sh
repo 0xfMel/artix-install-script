@@ -1,3 +1,6 @@
+set -e
+set -o pipefail
+
 echo Setting time
 ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
 hwclock --systohc
@@ -110,7 +113,7 @@ cryptdev=$(cat /install/cryptdev)
 
 echo Setting grub kernel options
 sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 nvidia-drm.modeset=1 amd_iommu=on iommu=pt"' /etc/default/grub
-sed -i '/^GRUB_CMDLINE_LINUX=/c\GRUB_CMDLINE_LINUX="cryptdevice=UUID=${cryptdev}:root:allow-discards resume=UUID=${BASH_REMATCH[1]} resume_offset=${o}"'
+sed -i '/^GRUB_CMDLINE_LINUX=/c\GRUB_CMDLINE_LINUX="cryptdevice=UUID=${cryptdev}:root:allow-discards resume=UUID=${BASH_REMATCH[1]} resume_offset=${o}"' /etc/default/grub
 
 echo Installing grub \& making grub config
 grub-install --bootloader-id=Grub

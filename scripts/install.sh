@@ -1,3 +1,6 @@
+set -e
+set -o pipefail
+
 echo Setting keyboard layout
 loadkeys uk
 
