@@ -1,2 +1,2 @@
 # artix-install-script
-`curl https://raw.githubusercontent.com/0xfMel/artix-install-script/master/start.sh | sh`
+`curl -O https://raw.githubusercontent.com/0xfMel/artix-install-script/master/start.sh && sh start.sh`

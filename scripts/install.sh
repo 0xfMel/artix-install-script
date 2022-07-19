@@ -6,9 +6,13 @@ loadkeys uk
 
 read -p "Device to install to: " installdev
 read -s -p "New System Encryption Password: " encpass
+echo
 read -s -p "Existing Data Disk Encryption Password: " hddpass
+echo
 read -s -p "Existing Data SSD 1 Encryption Password: " ssd1pass
+echo
 read -s -p "Existing Data SSD 2 Encryption Password: " ssd2pass
+echo
 read -p "Data Disk Device: " hdddev
 read -p "SSD 1 Device: " ssd1dev
 read -p "SSD 2 Device: " ssd2dev
@@ -105,7 +109,7 @@ basestrap /mnt base base-devel openrc elogind elogind-openrc linux-zen linux-fir
 echo Generating fstab
 fstabgen -U /mnt | tail -n +4 >> /mnt/etc/fstab
 
-echo Copying installation & config files to root
+echo Copying installation \& config files to root
 mkdir /mnt/install
 cp -r ./scripts /mnt/install
 
