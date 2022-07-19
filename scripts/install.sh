@@ -1,7 +1,3 @@
-exit
-
-if [[ $(id -u) -ne 0 ]] ; then echo "Please run as root" ; exit 1 ; fi
-
 if [ -z "$1" ]; then
   echo Provide device
   exit 1

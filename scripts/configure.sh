@@ -1,5 +1,3 @@
-exit
-
 echo Setting time
 ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
 hwclock --systohc
