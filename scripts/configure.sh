@@ -77,7 +77,9 @@ Include = /etc/pacman.d/chaotic-mirrorlist
 EOF
 
 echo Installing all packages
-pacman -Syyu --noconfirm grub efibootmgr alacritty alsa-utils amd-ucode btop dhcpcd discord dolphin exa ffmpegthumbnailer ffmpegthumbs firedragon fish gimp git gparted gtk3-nocsd-git gtk3-patched-filechooser-icon-view gwenview helix imagemagick kde-gtk-config kdegraphics-thumbnailers kdesdk-thumbnailers kimageformats libappindicator-gtk2 libappindicator-gtk3 linux-zen-headers nano neofetch noto-fonts-cjk ntfs-3g numlockx nvidia-dkms paru pipewire pipewire-alsa pipewire-pulse plasma-desktop plasma-pa plasma5-applets-window-appmenu powerdevil-light qt5-imageformats raw-thumbnailer resvg rustup rust-analyzer spotify steam sudo thunderbird tmux tor-browser ttf-liberation ttf-twemoji unbound unbound-openrc ungoogled-chromium wget xorg xorg-xinit pipewire-jack wireplumber phonon-qt5-vlc lib32-nvidia-utils gtk2-patched-filechooser-icon-view gtk3-patched-filechooser-icon-view glib2-patched-thumbnailer cryptsetup btrfs-progs git-credential-manager-core pass
+pacman -Syyu --noconfirm grub efibootmgr alacritty alsa-utils amd-ucode btop dhcpcd discord dolphin exa ffmpegthumbnailer ffmpegthumbs firedragon fish gimp git gparted gtk3-nocsd-git gwenview helix imagemagick kde-gtk-config kdegraphics-thumbnailers kdesdk-thumbnailers kimageformats libappindicator-gtk2 libappindicator-gtk3 linux-zen-headers nano neofetch noto-fonts-cjk ntfs-3g numlockx nvidia-dkms paru pipewire pipewire-alsa pipewire-pulse plasma-desktop plasma-pa plasma5-applets-window-appmenu powerdevil-light qt5-imageformats raw-thumbnailer resvg rustup rust-analyzer spotify steam sudo thunderbird tmux tor-browser ttf-liberation ttf-twemoji unbound unbound-openrc ungoogled-chromium wget xorg xorg-xinit pipewire-jack wireplumber phonon-qt5-vlc lib32-nvidia-utils gtk2-patched-filechooser-icon-view gtk3-patched-filechooser-icon-view cryptsetup btrfs-progs git-credential-manager-core pass
+pacman -S --asdeps --noconfirm libjpeg-turbo
+yes | pacman -S glib2-patched-thumbnailer
 
 cd /install
 
