@@ -1,11 +1,7 @@
-if [ -z "$1" ]; then
-  echo Provide device
-  exit 1
-fi
-
 echo Setting keyboard layout
 loadkeys uk
 
+read -p "Device to install to: " installdev
 read -s -p "New System Encryption Password: " encpass
 read -s -p "Existing Data Disk Encryption Password: " hddpass
 read -s -p "Existing Data SSD 1 Encryption Password: " ssd1pass
@@ -14,7 +10,7 @@ read -p "Data Disk Device: " hdddev
 read -p "SSD 1 Device: " ssd1dev
 read -p "SSD 2 Device: " ssd2dev
 
-read -p "Install to ${1}? " shouldcontinue
+read -p "Install to ${installdev}? " shouldcontinue
 
 if [ shouldcontinue -ne "y" ]; then
   exit 1
@@ -26,10 +22,10 @@ if [[ ${1: -1} =~ ^-?[0-9]+$ ]]; then
 fi
 
 echo Partitioning primary device
-printf "g\nn\n\n\n+128M\nn\n\n\n+512M\nn\n\n\n\nt\n1\n1\nt\n\n23\nw\n" | fdisk "$1"
+printf "g\nn\n\n\n+128M\nn\n\n\n+512M\nn\n\n\n\nt\n1\n1\nt\n\n23\nw\n" | fdisk "$installdev"
 
 echo Making EFI filesystem
-part1="${1}${partprefix}1"
+part1="${installdev}${partprefix}1"
 mkfs.fat -F 32 "$part1"
 
 echo Setting EFI filesystem label...
@@ -39,10 +35,10 @@ done
 echo EFI filesystem label set
 
 echo Making boot filesystem
-mkfs.btrfs -L BOOT "${1}${partprefix}2"
+mkfs.btrfs -L BOOT "${installdev}${partprefix}2"
 
 echo Making encrypted root partition
-part3="${1}${partprefix}3"
+part3="${installdev}${partprefix}3"
 printf "$encpass" | cryptsetup luksFormat "$part3"
 printf "$encpass" | cryptsetup open "$part3" root
 
