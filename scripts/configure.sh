@@ -14,7 +14,6 @@ echo Setting locale
 echo LANG=en_GB.UTF-8 > /etc/locale.conf
 
 echo Setting keyboard layout
-sed -i '/^keymap=/c\keymap="uk"' /etc/conf.d/keymaps
 echo KEYMAP=uk > /etc/vconsole.conf
 
 echo Enabling parallel pacman downloads
@@ -64,7 +63,7 @@ rankmirrors /etc/pacman.d/mirrorlist.backup > /etc/pacman.d/mirrorlist
 
 echo Getting and ranking up-to-date Arch mirrors
 cp /etc/pacman.d/mirrorlist-arch /etc/pacman.d/mirrorlist-arch.backup
-curl -s "https://archlinux.org/mirrorlist/?country=FR&country=GB&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' >> /etc/pacman.d/mirrorlist-arch.backup
+curl -s "https://archlinux.org/mirrorlist/?country=GB&protocol=https&use_mirror_status=on" | sed -e 's/^#Server/Server/' -e '/^#/d' >> /etc/pacman.d/mirrorlist-arch.backup
 rankmirrors /etc/pacman.d/mirrorlist-arch.backup > /etc/pacman.d/mirrorlist-arch
 
 echo Adding chaotic-aur support
@@ -80,29 +79,17 @@ Include = /etc/pacman.d/chaotic-mirrorlist
 EOF
 
 echo Installing all packages
-pacman -Syyu --noconfirm grub efibootmgr alacritty alsa-utils amd-ucode btop dhcpcd discord dolphin exa ffmpegthumbnailer ffmpegthumbs firedragon fish gimp git gparted gtk3-nocsd-git gwenview helix imagemagick kde-gtk-config kdegraphics-thumbnailers kdesdk-thumbnailers kimageformats libappindicator-gtk2 libappindicator-gtk3 linux-zen-headers nano neofetch noto-fonts-cjk ntfs-3g numlockx nvidia-dkms paru pipewire pipewire-alsa pipewire-pulse plasma-desktop plasma-pa plasma5-applets-window-appmenu powerdevil-light qt5-imageformats raw-thumbnailer resvg rustup rust-analyzer spotify steam sudo thunderbird tmux tor-browser ttf-liberation ttf-twemoji unbound unbound-openrc ungoogled-chromium wget xorg xorg-xinit pipewire-jack wireplumber phonon-qt5-vlc lib32-nvidia-utils gtk2-patched-filechooser-icon-view gtk3-patched-filechooser-icon-view cryptsetup btrfs-progs git-credential-manager-core pass
+pacman -Syyu --noconfirm grub efibootmgr alacritty alsa-utils amd-ucode btop dhcpcd dhcpcd-runit discord dolphin exa ffmpegthumbnailer ffmpegthumbs firedragon fish gimp git gparted gtk3-nocsd-git gwenview helix kde-gtk-config kdegraphics-thumbnailers kdesdk-thumbnailers kimageformats libappindicator-gtk2 libappindicator-gtk3 linux-zen-headers nano neofetch noto-fonts-cjk ntfs-3g numlockx nvidia-dkms paru pipewire pipewire-alsa pipewire-pulse plasma-desktop plasma-pa plasma5-applets-window-appmenu powerdevil-light qt5-imageformats raw-thumbnailer resvg rustup rust-analyzer spotify steam thunderbird tmux tor-browser ttf-liberation ttf-twemoji unbound unbound-runit ungoogled-chromium wget xorg xorg-xinit pipewire-jack wireplumber phonon-qt5-vlc lib32-nvidia-utils gtk2-patched-filechooser-icon-view gtk3-patched-filechooser-icon-view cryptsetup cryptsetup-runit btrfs-progs git-credential-manager-core pass
 pacman -S --asdeps --noconfirm libjpeg-turbo
 yes | pacman -S glib2-patched-thumbnailer || test $? -eq 141
 
 cd /install
-
 echo Installing mkinitcpio-numlock hook
 paru -G mkinitcpio-numlock
 chown nobody mkinitcpio-numlock/
 cd mkinitcpio-numlock
 sudo -u nobody makepkg
 pacman -U --noconfirm mkinitcpio-numlock*.pkg.tar.zst
-cd ..
-
-echo Calculating swapfile offset
-curl -O https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
-gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
-./btrfs_map_physical /swap/swapfile.img | head -n 2 > swap_btrfs_map_physical
-i=$(cat swap_btrfs_map_physical | head -n 1 | awk '{print gsub(/\t/,"")}')
-let "i++"
-n=$(cat swap_btrfs_map_physical | tail -n 1 | cut -f $i)
-p=$(getconf PAGESIZE)
-o=$(($n/$p))
 cd /
 
 echo Getting filesystem UUIDs
@@ -127,7 +114,6 @@ sed -i 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/g' /etc/sudoers
 
 echo Setting hostname
 echo mel-artix > /etc/hostname
-sed -i '/^hostname=/c\hostname="mel-artix"' /etc/conf.d/hostname
 cat << EOF >> /etc/hosts
 127.0.0.1    localhost
 ::1          localhost
@@ -135,12 +121,10 @@ cat << EOF >> /etc/hosts
 EOF
 
 echo Setting up network
-sed -i '/^#config_eth0=/c\config_eth0="dhcp"' /etc/conf.d/net
-ln -s /etc/init.d/net.lo /etc/init.d/net.eth0
-rc-update add net.eth0 default
+ln -s /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
 
 echo Setting mkinitcpio hooks
-sed -i '/^HOOKS=/c\HOOKS=(base udev autodetect keyboard keymap numlock modconf block encrypt resume filesystems fsck)' /etc/mkinitcpio.conf
+sed -i '/^HOOKS=/c\HOOKS=(base udev autodetect keyboard keymap numlock modconf block encrypt lvm2 resume filesystems fsck)' /etc/mkinitcpio.conf
 mkinitcpio -P
 
 #todo

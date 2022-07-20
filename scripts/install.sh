@@ -29,7 +29,7 @@ if [[ ${1: -1} =~ ^-?[0-9]+$ ]]; then
 fi
 
 echo Partitioning primary device
-printf "g\nn\n\n\n+128M\nn\n\n\n+512M\nn\n\n\n\nt\n1\n1\nt\n\n23\nw\n" | fdisk "$installdev"
+printf "g\nn\n\n\n+128M\nn\n\n\n+512M\nn\n\n\n\nt\n1\n1\nw\n" | fdisk "$installdev"
 
 echo Making EFI filesystem
 part1="${installdev}${partprefix}1"
@@ -44,10 +44,22 @@ echo EFI filesystem label set
 echo Making boot filesystem
 mkfs.btrfs -L BOOT "${installdev}${partprefix}2"
 
-echo Making encrypted root partition
+echo Making encrypted primary partition
 part3="${installdev}${partprefix}3"
 printf "$encpass" | cryptsetup luksFormat "$part3"
-printf "$encpass" | cryptsetup open "$part3" root
+printf "$encpass" | cryptsetup open "$part3" primary
+
+echo Making LVM swap and root volumes
+lvm pvcreate /dev/mapper/primary
+lvm vgcreate primary /dev/mapper/primary
+lvm lvcreate -L 24G primary -n swap
+lvm lvcreate -L +100%FREE primary -n root
+
+echo Making swap
+mkswap -L SWAP /dev/primary/swap
+
+echo Making root filesystem
+mkfs.btrfs -L ROOT /dev/primary/root
 
 echo Opening Data Disk
 printf "$hddpass" | cryptsetup open "$hdddev" hdd
@@ -56,17 +68,11 @@ printf "$ssd1pass" | cryptsetup open "$ssd1dev" ssd1
 echo Opening SSD 2
 printf "$ssd2pass" | cryptsetup open "$ssd2dev" ssd2
 
-echo Making root filesystem
-mkfs.btrfs -L ROOT /dev/mapper/root
-
-echo Waiting for root filesystem
-until [ -e /dev/disk/by-label/ROOT ]; do
-  sleep 1
-done
-echo Got root filesystem
+echo Enabling swap
+swapon /dev/primary/swap
 
 echo Mounting root devices
-mount /dev/disk/by-label/ROOT /mnt
+mount /dev/primary/root /mnt
 mkdir /mnt/boot
 mount /dev/disk/by-label/BOOT /mnt/boot
 mkdir /mnt/boot/efi
@@ -77,15 +83,6 @@ mkdir -p /mnt/data/hdd
 mkdir /mnt/data/ssd
 mount /dev/mapper/hdd /mnt/data/hdd
 mount /dev/disk/by-label/Data\\x20SSD /mnt/data/ssd
-
-echo Making swap file
-btrfs subvolume create /mnt/swap
-chattr +C /mnt/swap
-truncate -s 0 /mnt/swap/swapfile.img
-fallocate -l 24G /mnt/swap/swapfile.img
-chmod 0600 /mnt/swap/swapfile.img
-mkswap /mnt/swap/swapfile.img
-swapon /mnt/swap/swapfile.img
 
 echo Making new data device keys
 mkdir -p /mnt/etc/keys
@@ -103,8 +100,8 @@ printf "$ssd2pass" | cryptsetup luksAddKey "$ssd2dev" /mnt/etc/keys/ssd2key.key
 echo Enabling parallel pacman downloads
 sed -i '/^#ParallelDownloads =/c\ParallelDownloads = 10' /etc/pacman.conf
 
-echo Installing artix base and linux-zen kernel
-basestrap /mnt base base-devel openrc elogind elogind-openrc linux-zen linux-firmware
+echo Installing artix base, runit, and linux-zen kernel
+basestrap /mnt base base-devel runit elogind elogind-runit linux-zen linux-firmware
 
 echo Generating fstab
 fstabgen -U /mnt | tail -n +4 >> /mnt/etc/fstab
@@ -113,7 +110,7 @@ echo Copying installation \& config files to root
 mkdir /mnt/install
 cp -r ./scripts /mnt/install
 
-echo Saving root encrpyted device UUID to root
+echo Saving primary encrpyted device UUID to root
 regex='\sUUID="([^"]+)'
 [[ $(blkid "$part3") =~ $regex ]]
 echo ${BASH_REMATCH[1]} > /mnt/install/cryptdev
