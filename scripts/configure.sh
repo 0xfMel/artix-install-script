@@ -84,23 +84,35 @@ pacman -S --asdeps --noconfirm libjpeg-turbo
 yes | pacman -S glib2-patched-thumbnailer || test $? -eq 141
 
 cd /install
+
 echo Installing mkinitcpio-numlock hook
 paru -G mkinitcpio-numlock
 chown nobody mkinitcpio-numlock/
 cd mkinitcpio-numlock
 sudo -u nobody makepkg
 pacman -U --noconfirm mkinitcpio-numlock*.pkg.tar.zst
+cd ..
+
+echo Calculating swap file offset
+curl -O https://raw.githubusercontent.com/osandov/osandov-linux/master/scripts/btrfs_map_physical.c
+gcc -O2 -o btrfs_map_physical btrfs_map_physical.c
+./btrfs_map_physical /swap/swapfile.img | head -n 2 > swap_btrfs_map_physical
+i=$(cat swap_btrfs_map_physical | head -n 1 | awk '{print gsub(/\t/,"")}')
+let "i++"
+n=$(cat swap_btrfs_map_physical | tail -n 1 | cut -f $i)
+p=$(getconf PAGESIZE)
+o=$(($n/$p))
 cd /
 
-echo Getting filesystem UUIDs
+echo Getting filesystem 
+UUIDs
 regex='\sUUID="([^"]+)'
 [[ $(blkid /dev/mapper/root) =~ $regex ]]
 
 cryptdev=$(cat /install/cryptdev)
 
 echo Setting grub kernel options
-sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 nvidia-drm.modeset=1 amd_iommu=on iommu=pt"' /etc/default/grub
-sed -i "/^GRUB_CMDLINE_LINUX=/c\GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=${cryptdev}:root:allow-discards resume=UUID=${BASH_REMATCH[1]} resume_offset=${o}\"" /etc/default/grub
+sed -i "/^GRUB_CMDLINE_LINUX_DEFAULT=/c\GRUB_CMDLINE_LINUX_DEFAULT=\"loglevel=3 nvidia-drm.modeset=1 amd_iommu=on iommu=pt cryptdevice=UUID=${cryptdev}:root:allow-discards resume=UUID=${BASH_REMATCH[1]} resume_offset=${o}\"" /etc/default/grub
 
 echo Installing grub \& making grub config
 grub-install --bootloader-id=Grub
@@ -124,7 +136,7 @@ echo Setting up network
 ln -s /etc/runit/sv/dhcpcd /etc/runit/runsvdir/default
 
 echo Setting mkinitcpio hooks
-sed -i '/^HOOKS=/c\HOOKS=(base udev autodetect keyboard keymap numlock modconf block encrypt lvm2 resume filesystems fsck)' /etc/mkinitcpio.conf
+sed -i '/^HOOKS=/c\HOOKS=(base udev autodetect keyboard keymap numlock modconf block encrypt filesystems resume fsck)' /etc/mkinitcpio.conf
 mkinitcpio -P
 
 #todo
