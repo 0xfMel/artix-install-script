@@ -28,7 +28,7 @@ if [[ ${1: -1} =~ ^-?[0-9]+$ ]]; then
   partprefix="p"
 fi
 
-echo Partitioning primary device
+echo Partitioning root device
 printf "g\nn\n\n\n+128M\nn\n\n\n+512M\nn\n\n\n\nt\n1\n1\nt\n\n23\nw\n" | fdisk "$installdev"
 
 echo Making EFI filesystem
@@ -66,7 +66,7 @@ done
 echo Got root filesystem
 
 echo Mounting root devices
-mount /dev/primary/root /mnt
+mount /dev/mapper/root /mnt
 mkdir /mnt/boot
 mount /dev/disk/by-label/BOOT /mnt/boot
 mkdir /mnt/boot/efi
