@@ -42,7 +42,7 @@ done
 echo EFI filesystem label set
 
 echo Making boot filesystem
-mkfs.btrfs -L BOOT "${installdev}${partprefix}2"
+mkfs.btrfs -L BOOT -f "${installdev}${partprefix}2"
 
 echo Making encrypted root partition
 part3="${installdev}${partprefix}3"
@@ -57,7 +57,7 @@ echo Opening SSD 2
 printf "$ssd2pass" | cryptsetup open "$ssd2dev" ssd2
 
 echo Making root filesystem
-mkfs.btrfs -L ROOT /dev/mapper/root
+mkfs.btrfs -L ROOT -f /dev/mapper/root
 
 echo Waiting for root filesystem
 until [ -e /dev/disk/by-label/ROOT ]; do
@@ -100,8 +100,8 @@ printf "$ssd1pass" | cryptsetup luksAddKey "$ssd1dev" /mnt/etc/keys/ssd1key.key
 echo Adding new SSD 2 key
 printf "$ssd2pass" | cryptsetup luksAddKey "$ssd2dev" /mnt/etc/keys/ssd2key.key
 
-chmod 000 /etc/keys/*
-chmod -R g-rxw,o-rwx /etc/keys
+chmod 000 /mnt/etc/keys/*
+chmod -R g-rxw,o-rwx /mnt/etc/keys
 
 echo Enabling parallel pacman downloads
 sed -i '/^#ParallelDownloads =/c\ParallelDownloads = 10' /etc/pacman.conf

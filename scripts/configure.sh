@@ -104,8 +104,7 @@ p=$(getconf PAGESIZE)
 o=$(($n/$p))
 cd /
 
-echo Getting filesystem 
-UUIDs
+echo Getting filesystem UUIDs
 regex='\sUUID="([^"]+)'
 [[ $(blkid /dev/mapper/root) =~ $regex ]]
 
